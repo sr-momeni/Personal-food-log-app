@@ -1,4 +1,4 @@
-name: material-tailwind-dashboard-react
+name: food-log-app-g12
 region: us-east-1
 frontend:
   # Specifies the path of your code.

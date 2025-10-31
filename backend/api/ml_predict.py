@@ -29,12 +29,12 @@ try:
   )
   from tensorflow.keras.preprocessing.image import img_to_array, load_img
 except ImportError:  # pragma: no cover
-  MobileNetV2 = None  # type: ignore[assignment]
-  preprocess_input = None  # type: ignore[assignment]
-  img_to_array = None  # type: ignore[assignment]
-  load_img = None  # type: ignore[assignment]
+  MobileNetV2 = None
+  preprocess_input = None
+  img_to_array = None
+  load_img = None
   logger.warning(
-    "TensorFlow is not available. Using random predictions instead.",
+    "TensorFlow is not installed or misconfigured. Falling back to random predictions."
   )
 
 # Cache heavy models so they load only once during the app lifecycle.
