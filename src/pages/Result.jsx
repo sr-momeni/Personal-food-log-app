@@ -78,14 +78,14 @@ export default function Result() {
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center">
-      <Card className="w-full max-w-3xl border border-blue-gray-50 bg-white/95 shadow-lg shadow-blue-gray-900/10">
+      <Card className="w-full max-w-3xl border border-orange-100/60 bg-white/90 shadow-2xl shadow-orange-200/50 backdrop-blur">
         <CardBody className="flex flex-col gap-8 p-8 sm:p-10">
           <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-4">
-              <Typography variant="h4" color="blue-gray">
+              <Typography variant="h4" className="text-[var(--food-primary-dark)]">
                 {mealName}
               </Typography>
-              <div className="overflow-hidden rounded-3xl border border-blue-gray-50 bg-blue-gray-50/40 shadow-inner">
+              <div className="overflow-hidden rounded-3xl border border-orange-100/60 bg-orange-50/60 shadow-inner">
                 <img
                   src={imageSrc}
                   alt={mealName}
@@ -95,30 +95,30 @@ export default function Result() {
             </div>
             <div className="flex flex-col gap-4">
               <div>
-                <Typography variant="small" className="font-semibold uppercase text-blue-gray-400">
+                <Typography variant="small" className="font-semibold uppercase text-slate-500">
                   Ingredients
                 </Typography>
                 <ul className="mt-2 space-y-2">
                   {ingredients.map((ingredient) => (
                     <li
                       key={ingredient}
-                      className="rounded-xl border border-blue-gray-50 bg-blue-gray-50/40 px-4 py-2 text-sm font-medium text-blue-gray-700"
+                      className="rounded-xl border border-orange-50 bg-orange-50/60 px-4 py-2 text-sm font-medium text-[var(--food-primary-dark)]"
                     >
                       {ingredient}
                     </li>
                   ))}
                   {!ingredients.length && (
-                    <li className="rounded-xl border border-dashed border-blue-gray-100 px-4 py-3 text-sm text-blue-gray-300">
+                    <li className="rounded-xl border border-dashed border-orange-200 px-4 py-3 text-sm text-orange-300">
                       Ingredients will appear here after analysis.
                     </li>
                   )}
                 </ul>
               </div>
-              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 px-5 py-4 text-indigo-500 shadow-inner">
-                <Typography variant="small" className="uppercase tracking-wide">
+              <div className="rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-teal-50 px-5 py-4 text-[var(--food-primary)] shadow-inner">
+                <Typography variant="small" className="uppercase tracking-wide text-[var(--food-primary-dark)]">
                   Estimated Nutrition
                 </Typography>
-                <Typography variant="h5" className="mt-2 font-semibold text-indigo-600">
+                <Typography variant="h5" className="mt-2 font-semibold text-[var(--food-primary-dark)]">
                   {calories ? `${calories} Cal` : "Calculating..."}
                 </Typography>
               </div>
@@ -130,20 +130,20 @@ export default function Result() {
             </Typography>
           )}
         </CardBody>
-        <CardFooter className="flex flex-col gap-3 border-t border-blue-gray-50 bg-blue-gray-50/30 px-8 py-6 sm:flex-row sm:justify-end">
+        <CardFooter className="flex flex-col gap-3 border-t border-orange-100/60 bg-orange-50/60 px-8 py-6 sm:flex-row sm:justify-end">
           <Button
-            variant="text"
-            color="blue-gray"
+            variant="outlined"
+            color="orange"
             onClick={handleCancel}
-            className="w-full sm:w-auto"
+            className="w-full border-orange-200 text-[var(--food-primary-dark)] hover:bg-orange-50 sm:w-auto"
           >
             Cancel
           </Button>
           <Button
-            color="indigo"
+            color="orange"
             onClick={handleSave}
             disabled={saving}
-            className="w-full font-semibold shadow-indigo-500/20 sm:w-auto"
+            className="w-full font-semibold shadow-lg shadow-orange-300/40 sm:w-auto"
           >
             {saving ? "Saving..." : "Save"}
           </Button>

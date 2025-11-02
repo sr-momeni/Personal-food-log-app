@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Chart from "react-apexcharts";
 import {
@@ -7,98 +7,27 @@ import {
   CardHeader,
   Typography,
   Button,
-  Dialog,
-  DialogHeader,
-  DialogBody,
-  DialogFooter,
-  IconButton,
 } from "@material-tailwind/react";
-import {
-  PlusIcon,
-  CameraIcon,
-  PhotoIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { useMeal } from "@/context/meal";
 import { useMaterialTailwindController } from "@/context";
 import { CalorieHistoryCard } from "@/widgets/cards";
 import { resolveBackendImage } from "@/api";
-
-const DEFAULT_WEEKLY_CALORIES = [2100, 1950, 2230, 2010, 1890, 2400, 2150];
+import { MealCaptureDialog } from "@/components/meal-capture/MealCaptureDialog";
+import {
+  computeWeeklySeries,
+  formatMealDate,
+  parseMealDate,
+} from "@/utils/meals";
 
 const colorPalette = {
-  dark: { primary: "#0f172a", secondary: "#334155" },
-  white: { primary: "#4f46e5", secondary: "#818cf8" },
-  green: { primary: "#0f9d58", secondary: "#34d399" },
-  blue: { primary: "#3b82f6", secondary: "#2563eb" },
-  red: { primary: "#ef4444", secondary: "#f87171" },
+  dark: { primary: "#f97316", secondary: "#fb923c" },
+  white: { primary: "#f97316", secondary: "#22d3ee" },
+  green: { primary: "#10b981", secondary: "#34d399" },
+  blue: { primary: "#0ea5e9", secondary: "#38bdf8" },
+  red: { primary: "#f97316", secondary: "#fb923c" },
   pink: { primary: "#ec4899", secondary: "#f472b6" },
-  default: { primary: "#4f46e5", secondary: "#818cf8" },
-};
-
-const readFileAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-
-const DAY_INDEX = {
-  1: 0,
-  2: 1,
-  3: 2,
-  4: 3,
-  5: 4,
-  6: 5,
-  0: 6,
-};
-
-const parseMealDate = (value) => {
-  if (!value) return null;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const formatMealDate = (value) => {
-  const date = parseMealDate(value);
-  if (!date) return "Unknown date";
-  return date.toLocaleDateString();
-};
-
-const computeWeeklySeries = (meals) => {
-  if (!Array.isArray(meals) || !meals.length) {
-    return DEFAULT_WEEKLY_CALORIES;
-  }
-
-  const totals = Array(7).fill(0);
-  let hasValues = false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  meals.forEach((meal) => {
-    const caloriesValue = Number(meal.calories);
-    if (!Number.isFinite(caloriesValue)) return;
-
-    const dateValue = meal.date || meal.created_at;
-    const date = parseMealDate(dateValue);
-    if (!date) return;
-
-    const normalizedDate = new Date(date);
-    normalizedDate.setHours(0, 0, 0, 0);
-    const diffInDays = Math.floor(
-      (today.getTime() - normalizedDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    if (diffInDays < 0 || diffInDays > 6) return;
-
-    const index = DAY_INDEX[date.getDay()];
-    if (typeof index !== "number") return;
-
-    totals[index] += caloriesValue;
-    hasValues = hasValues || caloriesValue > 0;
-  });
-
-  return hasValues ? totals : DEFAULT_WEEKLY_CALORIES;
+  default: { primary: "#f97316", secondary: "#22d3ee" },
 };
 
 export default function FoodLogDashboard() {
@@ -107,15 +36,16 @@ export default function FoodLogDashboard() {
   const { sidenavColor } = controller;
   const navigate = useNavigate();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [cameraError, setCameraError] = useState("");
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [previewSrc, setPreviewSrc] = useState(null);
+  const [isCaptureOpen, setIsCaptureOpen] = useState(false);
 
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const streamRef = useRef(null);
+  const openCaptureDialog = () => setIsCaptureOpen(true);
+  const closeCaptureDialog = () => setIsCaptureOpen(false);
+
+  const handleCaptureConfirm = async ({ file, previewUrl }) => {
+    setCapture({ file, previewUrl });
+    setAnalysis(null);
+    navigate("/processing");
+  };
 
   const recentMeals = useMemo(() => {
     if (!Array.isArray(meals) || !meals.length) return [];
@@ -221,281 +151,83 @@ export default function FoodLogDashboard() {
     [chartTheme, weeklySeries]
   );
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setIsCameraActive(false);
-  };
-
-  const startCamera = async () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setCameraError(
-        "Camera not available. Please use the 'Upload Photo' option instead."
-      );
-      return;
-    }
-
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      streamRef.current = mediaStream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();
-      }
-      setCameraError("");
-      setPreviewSrc(null);
-      setIsCameraActive(true);
-    } catch (error) {
-      setCameraError(
-        "Unable to access the camera. Please allow permissions or upload a photo."
-      );
-      setIsCameraActive(false);
-    }
-  };
-
-  const handleOpenModal = async () => {
-    setPreviewSrc(null);
-    setIsModalOpen(true);
-    await startCamera();
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setCameraError("");
-    setPreviewSrc(null);
-    stopCamera();
-  };
-
-  const handleCapture = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const context = canvas.getContext("2d");
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const preview = canvas.toDataURL("image/png", 0.92);
-    setPreviewSrc(preview);
-
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-        const file = new File([blob], `meal_${Date.now()}.png`, {
-          type: "image/png",
-        });
-        setCapture({ file, previewUrl: preview });
-        setAnalysis(null);
-        handleCloseModal();
-        navigate("/processing");
-      },
-      "image/png",
-      0.92
-    );
-  };
-
-  const handleUploadClick = () => {
-    if (!fileInputRef.current) return;
-    fileInputRef.current.value = "";
-    fileInputRef.current.click();
-  };
-
-  const handleFileChange = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const preview = await readFileAsDataUrl(file);
-    setPreviewSrc(preview);
-    setCapture({ file, previewUrl: preview });
-    setAnalysis(null);
-    handleCloseModal();
-    navigate("/processing");
-  };
-
-  useEffect(() => {
-    return () => stopCamera();
-  }, []);
-
   return (
-    <div className="space-y-8 pb-24">
-      <Card className="border border-blue-gray-100 shadow-sm">
-        <CardHeader
-          floated={false}
-          shadow={false}
-          className="rounded-none px-6 py-5"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <Typography variant="h5" color="blue-gray">
-                Weekly Calorie Tracker
-              </Typography>
-              <Typography variant="small" className="text-blue-gray-400">
-                Snapshot of your daily intake over the last seven days
-              </Typography>
+    <>
+      <div className="space-y-8 pb-32 sm:pb-28">
+        <Card className="border border-orange-100/60 bg-white/80 shadow-lg shadow-orange-100/60">
+          <CardHeader
+            floated={false}
+            shadow={false}
+            className="rounded-none px-4 py-5 sm:px-6"
+          >
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <Typography variant="h5" className="text-[var(--food-primary-dark)]">
+                  Weekly Calorie Tracker
+                </Typography>
+                <Typography variant="small" className="text-slate-500">
+                  Snapshot of your intake over the last seven days
+                </Typography>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardBody className="px-2 pb-6 pt-0">
-          <Chart {...chartConfig} />
-        </CardBody>
-      </Card>
+          </CardHeader>
+          <CardBody className="px-0 pb-6 pt-0 sm:px-2">
+            <Chart {...chartConfig} />
+          </CardBody>
+        </Card>
 
-      <div className="space-y-4">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <Typography variant="h5" color="blue-gray">
-            Calorie History
-          </Typography>
-          <Typography variant="small" className="text-blue-gray-400">
-            Latest meals you&apos;ve logged
-          </Typography>
-        </div>
-        {mealsLoading ? (
-          <Card className="border border-blue-gray-50">
-            <CardBody>
-              <Typography variant="small" className="text-blue-gray-400">
-                Loading calorie history...
-              </Typography>
-            </CardBody>
-          </Card>
-        ) : recentMeals.length ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {recentMeals.map((meal) => (
-              <CalorieHistoryCard key={meal.id} meal={meal} />
-            ))}
+        <section className="space-y-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <Typography variant="h5" className="text-[var(--food-primary-dark)]">
+              Calorie History
+            </Typography>
+            <Typography variant="small" className="text-slate-500">
+              Latest meals you&apos;ve logged
+            </Typography>
           </div>
-        ) : (
-          <Card className="border border-blue-gray-50">
-            <CardBody className="flex items-center justify-center">
-              <Typography variant="small" className="text-blue-gray-400">
-                {historyError || "No meal data available."}
-              </Typography>
-            </CardBody>
-          </Card>
-        )}
+          {mealsLoading ? (
+            <Card className="border border-orange-50 bg-white/70">
+              <CardBody>
+                <Typography variant="small" className="text-slate-500">
+                  Loading calorie history...
+                </Typography>
+              </CardBody>
+            </Card>
+          ) : recentMeals.length ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {recentMeals.map((meal) => (
+                <CalorieHistoryCard key={meal.id} meal={meal} />
+              ))}
+            </div>
+          ) : (
+            <Card className="border border-orange-50 bg-white/70">
+              <CardBody className="flex items-center justify-center">
+                <Typography variant="small" className="text-slate-500">
+                  {historyError || "No meal data available."}
+                </Typography>
+              </CardBody>
+            </Card>
+          )}
+        </section>
       </div>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-8 z-40 flex justify-center">
+      <div className="fixed bottom-6 left-0 right-0 z-40 flex justify-center px-4 sm:px-6">
         <Button
-          color="blue-gray"
-          onClick={handleOpenModal}
-          className="pointer-events-auto flex items-center gap-2 rounded-full bg-black px-8 py-3 font-semibold text-white shadow-lg shadow-gray-900/30 transition-all duration-300 hover:bg-black/90 hover:shadow-xl pulse-scale"
+          color="orange"
+          onClick={openCaptureDialog}
+          aria-label="Log a meal"
+          className="flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-[var(--food-primary)] px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg shadow-orange-300/50 transition-all duration-300 hover:bg-[var(--food-primary-dark)] hover:shadow-xl sm:w-auto sm:px-8"
         >
-          <PlusIcon className="h-5 w-5 text-white" />
-          + Log Meal 🍽️
+          <PlusIcon className="h-5 w-5" />
+          Log Meal
         </Button>
       </div>
 
-      <Dialog
-        open={isModalOpen}
-        handler={handleCloseModal}
-        size="xs"
-        dismiss={{ enabled: true }}
-        className="mx-4 mb-4 rounded-3xl bg-white p-0 shadow-xl sm:mx-auto sm:w-[420px]"
-        containerProps={{
-          className:
-            "fixed inset-0 z-[999] grid items-end justify-center bg-black/40 px-4 pb-6",
-        }}
-      >
-        <DialogHeader className="flex items-center justify-between px-5 py-4">
-          <div>
-            <Typography variant="h5">Add Meal Photo</Typography>
-            <Typography variant="small" className="text-blue-gray-400">
-              Capture a quick snapshot or upload from your gallery
-            </Typography>
-          </div>
-          <IconButton
-            variant="text"
-            color="blue-gray"
-            onClick={handleCloseModal}
-            className="rounded-full"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </IconButton>
-        </DialogHeader>
-        <DialogBody className="space-y-4 px-5 pb-4">
-          <div className="rounded-2xl border border-blue-gray-100 bg-blue-gray-50/60 p-3">
-            {previewSrc ? (
-              <img
-                src={previewSrc}
-                alt="Meal preview"
-                className="h-48 w-full rounded-xl object-cover"
-              />
-            ) : isCameraActive ? (
-              <video
-                ref={videoRef}
-                className="h-48 w-full rounded-xl object-cover"
-                playsInline
-                autoPlay
-                muted
-              />
-            ) : (
-              <div className="flex h-48 w-full flex-col items-center justify-center rounded-xl bg-white text-blue-gray-300">
-                <CameraIcon className="mb-2 h-12 w-12" />
-                <Typography variant="small" className="text-blue-gray-300">
-                  Camera preview will appear here
-                </Typography>
-              </div>
-            )}
-          </div>
-
-          {cameraError && (
-            <Typography variant="small" color="red" className="font-medium">
-              {cameraError}
-            </Typography>
-          )}
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              color="indigo"
-              className="flex flex-1 items-center justify-center gap-2"
-              onClick={isCameraActive ? handleCapture : startCamera}
-            >
-              <CameraIcon className="h-5 w-5" />
-              {isCameraActive ? "Capture Photo" : "Try Camera Again"}
-            </Button>
-            <Button
-              variant="outlined"
-              color="indigo"
-              className="flex flex-1 items-center justify-center gap-2"
-              onClick={handleUploadClick}
-            >
-              <PhotoIcon className="h-5 w-5" />
-              Upload Photo
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
-        </DialogBody>
-        <DialogFooter className="flex items-center justify-between gap-2 px-5 pb-5 pt-0">
-          <Typography variant="small" className="text-blue-gray-400">
-            Preview is saved temporarily until you submit.
-          </Typography>
-          <Button
-            color="blue-gray"
-            variant="text"
-            className="px-6"
-            onClick={handleCloseModal}
-          >
-            Cancel
-          </Button>
-        </DialogFooter>
-        <canvas ref={canvasRef} className="hidden" />
-      </Dialog>
-    </div>
+      <MealCaptureDialog
+        open={isCaptureOpen}
+        onClose={closeCaptureDialog}
+        onConfirm={handleCaptureConfirm}
+      />
+    </>
   );
 }
-

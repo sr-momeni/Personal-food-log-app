@@ -73,21 +73,21 @@ export default function Profile() {
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] w-full items-center justify-center">
-      <Card className="w-full max-w-3xl border border-blue-gray-100 bg-white/90 shadow-lg shadow-blue-gray-900/10">
+      <Card className="w-full max-w-3xl border border-orange-100/60 bg-white/85 shadow-2xl shadow-orange-200/40 backdrop-blur">
         <CardBody className="flex flex-col gap-8 p-8 sm:p-10">
           <div className="flex flex-col items-center gap-5 text-center md:flex-row md:items-center md:gap-8 md:text-left">
             <Avatar
               variant="circular"
               size="xl"
-              className="shadow-lg shadow-indigo-500/20"
-              src="/img/logo.png"
+              className="border border-orange-200 shadow-lg shadow-orange-200/40"
+              src="/icons/food-log-icon-192.png"
               alt={profile.name}
             />
             <div>
-              <Typography variant="h4" color="blue-gray" className="font-semibold">
+              <Typography variant="h4" className="font-semibold text-[var(--food-primary-dark)]">
                 {profile.name}
               </Typography>
-              <Typography variant="small" className="text-blue-gray-400">
+              <Typography variant="small" className="text-slate-500">
                 Staying consistent with daily nutrition goals
               </Typography>
             </div>
@@ -101,12 +101,12 @@ export default function Profile() {
             {userDetails.map((item) => (
               <div
                 key={item.label}
-                className="rounded-2xl border border-blue-gray-50 bg-gradient-to-br from-white to-blue-gray-50/40 p-5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
+                className="rounded-2xl border border-orange-50 bg-gradient-to-br from-white/90 via-white/80 to-orange-50/60 p-5 shadow-lg shadow-orange-100/40 transition-transform duration-200 hover:-translate-y-1"
               >
-                <Typography variant="small" className="text-blue-gray-400 uppercase tracking-wide">
+                <Typography variant="small" className="text-slate-500 uppercase tracking-wide">
                   {item.label}
                 </Typography>
-                <Typography variant="h6" color="blue-gray" className="mt-1 font-medium">
+                <Typography variant="h6" className="mt-1 font-medium text-[var(--food-primary-dark)]">
                   {loading && item.label !== "Email" ? "Loading..." : item.value}
                 </Typography>
               </div>

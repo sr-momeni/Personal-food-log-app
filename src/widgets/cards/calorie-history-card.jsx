@@ -6,26 +6,26 @@ export function CalorieHistoryCard({ meal }) {
   const imageSrc = image || "/img/home-decor-1.jpeg";
 
   return (
-    <Card className="h-full min-h-[180px] border border-blue-gray-50 shadow-sm shadow-blue-gray-900/5">
+    <Card className="h-full min-h-[180px] border border-orange-100/60 bg-white/80 shadow-lg shadow-orange-100/40">
       <CardBody className="flex h-full flex-col gap-3 p-4">
         <div className="flex items-center gap-3">
           <img
             src={imageSrc}
             alt={name}
-            className="h-14 w-14 rounded-xl object-cover"
+            className="h-14 w-14 rounded-2xl border border-white/60 object-cover shadow-sm shadow-orange-200/60"
           />
           <div>
-            <Typography variant="h6" color="blue-gray">
+            <Typography variant="h6" className="text-[var(--food-primary-dark)]">
               {name}
             </Typography>
-            <Typography variant="small" className="text-blue-gray-400">
+            <Typography variant="small" className="text-slate-500">
               {date}
             </Typography>
           </div>
         </div>
         <Typography
           variant="h5"
-          className="mt-auto font-semibold text-indigo-500"
+          className="mt-auto font-semibold text-[var(--food-primary)]"
         >
           {calories} kcal
         </Typography>
@@ -46,6 +46,5 @@ CalorieHistoryCard.propTypes = {
 CalorieHistoryCard.displayName = "/src/widgets/cards/calorie-history-card.jsx";
 
 export default CalorieHistoryCard;
-
 
 

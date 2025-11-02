@@ -15,7 +15,10 @@ import App from "./App";
 import { ThemeProvider } from "@material-tailwind/react";
 import { MaterialTailwindControllerProvider } from "@/context";
 import { MealProvider } from "@/context/meal";
+import { registerSW } from "virtual:pwa-register";
 import "../public/css/tailwind.css";
+
+registerSW({ immediate: true });
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

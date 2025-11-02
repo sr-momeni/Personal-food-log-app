@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --food-primary: #f97316;
+  --food-primary-dark: #ea580c;
+  --food-accent: #22d3ee;
+  --food-surface: #fff7ed;
+  --food-surface-alt: #fff1d6;
+  --food-text: #1f2937;
+}
+
+body {
+  @apply bg-[var(--food-surface)] text-[var(--food-text)];
+  font-family: "Roboto", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background-image: radial-gradient(circle at top left, rgba(249, 115, 22, 0.2), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.18), transparent 45%);
+  background-attachment: fixed;
+}
+
+.glass-card {
+  @apply rounded-3xl border border-white/40 bg-white/70 shadow-lg shadow-orange-200/40 backdrop-blur;
+}
+
 @keyframes pulse-scale {
   0%,
   100% {

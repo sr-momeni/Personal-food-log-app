@@ -66,17 +66,17 @@ export default function Processing() {
   }, [capture, navigate, setAnalysis, setCapture]);
 
   return (
-    <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-white">
-      <Card className="w-full max-w-md border border-blue-gray-50 bg-white shadow-lg shadow-blue-gray-900/10">
+    <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center">
+      <Card className="w-full max-w-md border border-orange-100/60 bg-white/90 shadow-xl shadow-orange-200/40 backdrop-blur">
         <CardBody className="flex flex-col items-center gap-6 p-10 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-indigo-100 bg-indigo-50">
-            <span className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-orange-200 bg-orange-50">
+            <span className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--food-primary)] border-t-transparent" />
           </div>
           <div className="space-y-2">
-            <Typography variant="h4" color="blue-gray">
+            <Typography variant="h4" className="text-[var(--food-primary-dark)]">
               Processing...
             </Typography>
-            <Typography variant="small" className="text-blue-gray-400">
+            <Typography variant="small" className="text-slate-500">
               Analyzing your meal...
             </Typography>
           </div>
